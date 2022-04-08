@@ -10,7 +10,7 @@ import youtube_dl
 import asyncio
 
 
-token = 'OTYwMjk1MjM3OTI0ODQ3Njg2.YkoWog.czzn5m_ol9wUQIsT3JaY34OD_Ok'   # bot token
+token = 'token'   # bot token
 
 # next 3 lines are needed to be able to log when members leave
 intents = discord.Intents.default()
@@ -20,10 +20,10 @@ client = discord.Client(intents=intents)
 slash = SlashCommand(client, sync_commands=True)
 
 # delete logs
-del_channel: List(discord.TextChannel) = []
-del_user: List(discord.Member) = []
-del_time: List(datetime) = []
-del_message_logs: List(discord.Message) = []
+del_channel: List[discord.TextChannel] = []
+del_user: List[discord.Member] = []
+del_time: List[datetime] = []
+del_message_logs: List[discord.Message] = []
 time = datetime.today()
 ctx: Context = None
 
@@ -224,9 +224,9 @@ class YTDLSource(discord.PCMVolumeTransformer):
         title = data['title']
         return filename, title
 
-file_queue: List(discord.FFmpegPCMAudio) = [] # list of songs in a format discord can play
-song_queue: List(str) = []  # list of song names
-author_list: List(ctx.author) = []  # list of song requesters
+file_queue: List[discord.FFmpegPCMAudio] = [] # list of songs in a format discord can play
+song_queue: List[str] = []  # list of song names
+author_list: List[discord.Member] = []  # list of song requesters
 count: int = 0  # index of currently playing song
 
 
