@@ -8,6 +8,7 @@ from discord.ext.commands import Context
 import requests
 import youtube_dl
 import asyncio
+from asyncpraw import Reddit
 
 
 token = 'token'   # bot token
@@ -200,7 +201,8 @@ ytdl_format_options = {
 }
 
 ffmpeg_options = {
-    'options': '-vn'
+    'options': '-vn -b:a 0.8M',
+    'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5'
 }
 
 ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
@@ -389,6 +391,23 @@ async def skip(ctx: Context):
     await ctx.send("Skipped.")
 
 
+@slash.slash(name="connect", description="connect to voice channel")
+async def connect(ctx: Context):
+
+    """
+    connect to vc
+    """
+
+    global count
+    voice_client: discord.VoiceClient = client.get_channel(790705872342482965)
+    await voice_client.connect()
+    song_queue.clear()
+    author_list.clear()
+    file_queue.clear()
+    count = 0
+    await ctx.send("Hello.")
+
+
 @slash.slash(name="leave", description="leave voice channel")
 async def leave(ctx: Context):
 
@@ -405,6 +424,42 @@ async def leave(ctx: Context):
     count = 0
     await ctx.send("Bye.")
 
+
+@slash.slash(name="meme", description="post a meme from Reddit")
+async def meme(ctx: Context):
+
+    await ctx.defer()
+    reddit = Reddit(client_id = "22zNl3X38I-mQJvd2MuJ5A", client_secret="HMxVZEHtMjm5S5zSBGkleh2Ea642uQ", user_agent="petunibot/0.1 by uwrallyx")
+
+    submissions = []
+    whenthe = await reddit.subreddit("whenthe", fetch=True)
+    shitposting = await reddit.subreddit("shitposting", fetch=True)
+    memes = await reddit.subreddit("memes", fetch=True)
+
+    async for sub in whenthe.top(limit=10):
+
+        submissions.append(sub.url)
+
+    async for sub in shitposting.top(limit=10):
+
+        submissions.append(sub.url)
+    
+    async for sub in memes.top(limit=10):
+
+        submissions.append(sub.url)
+    
+    num = randrange(start = 0, stop = len(submissions)-1)
+    
+    await ctx.send(submissions[num])
+
+
+@slash.slash(name="view-birthdays", description="View server birthdays")
+async def view_birthdays(ctx: Context):
+
+    message = '```\n02/23 - Lex\n02/25 - Joanne\n03/19 - Karan\n08/11 - Skandan\n08/26 - skelly\n09/10 - Arjun\n09/15 - Parm\n09/19 - Tij\n09/21 - Tobi\n```'
+
+    await ctx.send(message)
+    
 
 @slash.slash(name="help",description="List of commands and descriptions")
 async def help(ctx):
@@ -425,6 +480,11 @@ async def help(ctx):
     embed.add_field(name='```skip```', value="Skip to the next song")
     embed.add_field(name='```queue```', value="Print the current queue list of songs")
     embed.add_field(name='```queueremove```', value="Remove a song from the queue given its position in the queue")
+    embed.add_field(name='```connect```', value="Connect to the voice channel")
+    embed.add_field(name='```leave```', value="Leave the voice channel")
+    embed.add_field(name='```meme```', value="Post a meme from Reddit (r/whenthe, r/shitposting, r/memes)")
+    embed.add_field(name='```view-birthdays```', value="Print the brithdays of alol the servers members")
+
     await ctx.send(embed=embed)
 
 
