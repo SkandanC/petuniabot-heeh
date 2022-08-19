@@ -25,7 +25,7 @@ del_channel: List[discord.TextChannel] = []
 del_user: List[discord.Member] = []
 del_time: List[datetime] = []
 del_message_logs: List[discord.Message] = []
-time = datetime.today()
+time = datetime.now()
 ctx: Context = None
 
 @client.event
@@ -47,7 +47,7 @@ async def hug(ctx: Context, member: discord.Member):
     """
     Prints randomized hug message by calling the hug() method.
     """
-    
+
     sender = ctx.author.id  # id of "hug sender"
     reciever = member.id    # id of "hug reciever"
     message = hugs(sender, reciever)    # retrieve randomized hug message
@@ -113,8 +113,8 @@ async def on_message_delete(message: discord.message):
     del_user.append(message.author)
     del_time.append(message.created_at)
     del_message_logs.append(message.content)
-    
-    if divmod((datetime.today() - time).total_seconds(), 3600)[0] > 3:
+
+    if divmod((datetime.now() - time).total_seconds(), 3600)[0] > 3:
 
         del_channel.pop(0)
         del_user.pop(0)
@@ -128,11 +128,12 @@ async def deleted(ctx):
     """
     Prints the deleted messages, channel name, user name and message creation time from the past 3 hrs.
     """
-    
-    message_list = []
-    for key, _ in enumerate(del_message_logs):
-        message_list.append(f" ```{del_user[key]} sent message in {del_channel[key]} at {del_time[key]}```: {del_message_logs[key]}\n")
-    
+
+    message_list = [
+        f" ```{del_user[key]} sent message in {del_channel[key]} at {del_time[key]}```: {del_message_logs[key]}\n"
+        for key, _ in enumerate(del_message_logs)
+    ]
+
     message = ''.join(map(str, message_list))
     await ctx.send(message)
 
@@ -143,34 +144,34 @@ async def wordle(ctx):
     """
     iterations a wordle game and calls the wordle generator.
     """
-    
+
     won = 0 # logs whether the game is over
 
     iteration = 0 # logs the number of tries
-    
+
     guess = [['1', '2', '3', '4', '5']] # logs guesses stripped into individual letters
-    
+
     wordlist = open('wordlist.txt').readlines() # read from file containing all possible correct words
     number = randrange(len(wordlist) + 1)   
     correct_word = list(wordlist[number][:-1])  # pick a random word
     print(correct_word)
-    
+
     print_guesses = '' # logs the wordle square block thingy 
 
     playerid = ctx.author.id
     channel_id = ctx.channel.id
-    
+
     while won != 1:
-        
+
         if iteration == 0:
-            
+
             # Initial embed
             embed = discord.Embed(color=discord.Colour.green())
             embed.add_field(name='Wordle', value='Start making guesses!')
             await ctx.send(embed=embed)
 
         won, guess, print_guesses = await wordle_generator(ctx, channel_id, guess, correct_word, print_guesses, playerid)   # call wordle generator method and start the next iteration of the game
-        
+
         iteration += 1
 
         if iteration == 6:  # game over
@@ -178,7 +179,7 @@ async def wordle(ctx):
             embed.add_field(name='Wordle', value=f'<@{ctx.author.id}> lost! \n{print_guesses}')
             await ctx.send(embed=embed)
             break
-        
+
         if won == 1:    # game won
             break  
         
@@ -266,37 +267,37 @@ async def playit():
 
 @slash.slash(name="play", description="play a song")
 async def play(ctx: Context,  link: str = '', search: str = ''):
-    
+
     """
     command to play songs, calls the play_next() method to play the next song in queue
     """
-    
+
     voice_channel:discord.VoiceChannel = client.get_channel(790705872342482965) # voice channel (chitter-chatter)
     if client.voice_clients == []:
 
         voice_client = await voice_channel.connect(timeout = 1200,reconnect=True)   # connect to vc
-    
+
     else:
-        
+
         voice_client = client.voice_clients[0] # if alreadt connected, get voice channel
-    
+
     url = ''
     if link != '':
-        
+
         if requests.get(link).status_code == 200:
-        
+
             url = link
             if voice_client.is_playing() is True:
                 await ctx.send("Song added to queue!")
-        
+
         else:
 
             await ctx.send("That is not a valid url.")
-    
+
     elif search != '':
         search_query = search.split(' ')
         for i, _ in enumerate(search_query):
-            url = url+f'{search_query[i]}+'
+            url = f'{url}{search_query[i]}+'
         url = url[:-1]
         if voice_client.is_playing() is True:
             await ctx.send("Song added to queue!")
@@ -355,7 +356,7 @@ async def queue(ctx: Context):
     message = '```\n'
     for num, name in enumerate(song_queue):
 
-        message = message + f'{num+1}. {name}, requested by: {author_list[num]}\n'
+        message = f'{message}{num + 1}. {name}, requested by: {author_list[num]}\n'
 
     message = message + '\n```'
 
@@ -370,8 +371,7 @@ async def queueremove(ctx: Context, index: str = 0):
     """
 
     await ctx.send(f'Removed {song_queue[int(index)-1]}.')
-    index = int(index)
-    index = index - 1
+    index = int(index) - 1
     song_queue.pop(int(index))
     file_queue.pop(int(index))
     author_list.pop(int(index))
@@ -443,13 +443,13 @@ async def meme(ctx: Context):
     async for sub in shitposting.top(limit=10):
 
         submissions.append(sub.url)
-    
+
     async for sub in memes.top(limit=10):
 
         submissions.append(sub.url)
-    
+
     num = randrange(start = 0, stop = len(submissions)-1)
-    
+
     await ctx.send(submissions[num])
 
 
@@ -496,48 +496,49 @@ async def wordle_generator(ctx, CHANNEL_ID, guess, correct_word, print_guesses, 
 
     with open('validguesses.txt', 'r') as file:
         validguesses = file.read().replace('\n', '')    # read all possible valid guesses from a file
-        
+
     msg = await client.wait_for(event="message")   # get word
 
-    if msg.channel.id == CHANNEL_ID and msg.author.id == playerid:
-        
-        if msg.content not in validguesses:
-            await ctx.send(f'{msg.content} is not a valid guess!') 
-            return -1, guess, print_guesses
-            
-        else:
-            check_guess = list(msg.content)
-
-        # check if guess os correct and update the block thingy accordingly
-        string = list('⬛⬛⬛⬛⬛\n')
-        for key2, _ in enumerate(guess[-1]):
-            if check_guess[key2] == correct_word[key2]:
-                string[key2] = '🟩'
-            elif check_guess[key2] in correct_word and check_guess[key2] !=correct_word[key2]:
-                string[key2] = '🟨'
-
-        print_guesses = print_guesses + ''.join(square for square in string)
-
-        print(check_guess)
-        print(correct_word)
-
-        # send messages with the block thingy
-        if check_guess == correct_word:
-            
-            embed = discord.Embed(color=discord.Colour.green())
-            embed.add_field(name='Wordle', value=f"<@{playerid}> won:\nThe word was: {''.join(letter for letter in correct_word)}\n{print_guesses}")
-            await ctx.send(embed=embed)
-            return 1, guess, print_guesses
-        
-        else:
-
-            embed = discord.Embed(color=discord.Colour.green())
-            embed.add_field(name='Wordle', value=f'<@{msg.author.id}> guessed:\n{print_guesses}')
-            await ctx.send(embed=embed)
-            return 0, guess, print_guesses
+    if msg.channel.id != CHANNEL_ID or msg.author.id != playerid:
+        return -1, guess, print_guesses
+    if msg.content not in validguesses:
+        await ctx.send(f'{msg.content} is not a valid guess!') 
+        return -1, guess, print_guesses
 
     else:
-        return -1, guess, print_guesses
+        check_guess = list(msg.content)
+
+    # check if guess os correct and update the block thingy accordingly
+    string = list('⬛⬛⬛⬛⬛\n')
+    for key2, _ in enumerate(guess[-1]):
+        if check_guess[key2] == correct_word[key2]:
+            string[key2] = '🟩'
+        elif check_guess[key2] in correct_word:
+            string[key2] = '🟨'
+
+    print_guesses = print_guesses + ''.join(string)
+
+    print(check_guess)
+    print(correct_word)
+
+        # send messages with the block thingy
+    if check_guess == correct_word:
+        
+        embed = discord.Embed(color=discord.Colour.green())
+        embed.add_field(
+            name='Wordle',
+            value=f"<@{playerid}> won:\nThe word was: {''.join(correct_word)}\n{print_guesses}",
+        )
+
+        await ctx.send(embed=embed)
+        return 1, guess, print_guesses
+
+    else:
+
+        embed = discord.Embed(color=discord.Colour.green())
+        embed.add_field(name='Wordle', value=f'<@{msg.author.id}> guessed:\n{print_guesses}')
+        await ctx.send(embed=embed)
+        return 0, guess, print_guesses
    
 
 def hugs(sender, reciever):
